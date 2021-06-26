@@ -21,9 +21,9 @@ input    [255:0]   data_i;
 input              enable_i;
 input              write_i;
 
-output   [24:0]    tag_o;
-output   [255:0]   data_o;
-output             hit_o;
+output reg   [24:0]    tag_o;
+output reg   [255:0]   data_o;
+output reg             hit_o;
 
 
 // Memory
@@ -45,12 +45,45 @@ always@(posedge clk_i or posedge rst_i) begin
             end
         end
     end
-    if (enable_i && write_i) begin
-        // TODO: Handle your write of 2-way associative cache + LRU here
+    else begin
+        if (enable_i && write_i) begin
+            // TODO: Handle your write of 2-way associative cache + LRU here
+            if (!tag[addr_i][0][24]) begin
+                tag[addr_i][0][24] <= 1'b1;
+                tag[addr_i][0][23] <= 1'b0;
+                tag[addr_i][0][22:0] <= tag_i[22:0];
+                data[addr_i][0] <= data_i;
+                data_o <= data_i;
+                hit_o <= 1'b1;
+            end
+            else begin
+                tag[addr_i][1][24] <= 1'b1;
+                tag[addr_i][1][23] <= 1'b0;
+                tag[addr_i][1][22:0] <= tag_i[22:0];
+                data[addr_i][1] <= data_i;
+                data_o <= data_i;
+                hit_o <= 1'b1;
+            end
+        end
+        else if (enable_i && !write_i) begin
+            // TODO: Handle your write of 2-way associative cache + LRU here
+            hit_o <= 1'b0;
+            if (tag[addr_i][0][24] && (tag[addr_i][0][22:0] == tag_i[22:0])) begin
+                hit_o <= 1'b1;
+                data_o <= data[addr_i][0];
+            end
+            else if(tag[addr_i][1][24] && (tag[addr_i][1][22:0] == tag_i[22:0])) begin
+                hit_o <= 1'b1;
+                data_o <= data[addr_i][1];
+            end
+            else begin
+                hit_o <= 1'b0;
+                // tag_o = tag_i;
+                data_o <= data_i;
+            end
+        end
     end
 end
 
-// Read Data      
-// TODO: tag_o=? data_o=? hit_o=?
 
 endmodule

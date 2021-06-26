@@ -1,4 +1,4 @@
-`define CYCLE_TIME 50
+`define CYCLE_TIME 100
 
 module testbench;
 
@@ -17,7 +17,7 @@ wire    [256-1:0]  cpu_mem_data;
 wire    [32-1:0]   cpu_mem_addr;     
 wire               cpu_mem_enable; 
 wire               cpu_mem_write; 
-parameter          num_cycles = 200;
+parameter          num_cycles = 30;
 
 always #(`CYCLE_TIME/2) Clk = ~Clk;    
 
@@ -142,7 +142,7 @@ initial begin
 
 end
   
-always@(posedge Clk) begin
+always@(negedge Clk) begin
     if(counter == num_cycles) begin    // store cache to memory
         $fdisplay(outfile, "Flush Cache! \n");
         for (j=0; j<2; j=j+1) begin
@@ -160,7 +160,26 @@ always@(posedge Clk) begin
         
     // print PC 
     $fdisplay(outfile, "cycle = %0d, Start = %b\nPC = %d", counter, Start, CPU.PC.pc_o);
+
+    $fdisplay(outfile, "sram enable: %b", CPU.dcache.dcache_sram.enable_i);
+    $fdisplay(outfile, "sram write: %b", CPU.dcache.dcache_sram.write_i);
+    $fdisplay(outfile, "sram hit: %b", CPU.dcache.dcache_sram.hit_o);
+    $fdisplay(outfile, "sram tag[addr_i][0]:     %b", CPU.dcache.dcache_sram.tag[CPU.dcache.dcache_sram.addr_i][0]);
+    $fdisplay(outfile, "sram tag[addr_i][1]:     %b", CPU.dcache.dcache_sram.tag[CPU.dcache.dcache_sram.addr_i][1]);
+    $fdisplay(outfile, "sram addr:               %h", CPU.dcache.dcache_sram.addr_i);
+    $fdisplay(outfile, "sram tag_i:              %b", CPU.dcache.dcache_sram.tag_i);
+    $fdisplay(outfile, "sram outside if: %b", (CPU.dcache.dcache_sram.enable_i && ! CPU.dcache.dcache_sram.write_i));
+    $fdisplay(outfile, "sram if: %b", (CPU.dcache.dcache_sram.tag[CPU.dcache.dcache_sram.addr_i][0][24] && (CPU.dcache.dcache_sram.addr_i[22:0] == CPU.dcache.dcache_sram.tag[CPU.dcache.dcache_sram.addr_i][0][22:0])));
+    $fdisplay(outfile, "sram if: %b", (CPU.dcache.dcache_sram.tag[CPU.dcache.dcache_sram.addr_i][1][24] && (CPU.dcache.dcache_sram.addr_i[22:0] == CPU.dcache.dcache_sram.tag[CPU.dcache.dcache_sram.addr_i][1][22:0])));
+    // $fdisplay(outfile, "sram data_o: %h", CPU.dcache.dcache_sram.data_o);
+    // $fdisplay(outfile, "sram data_o: %h", CPU.dcache.dcache_sram.data[addr_i][0]);
+    $fdisplay(outfile, "\n");
     
+    $fdisplay(outfile, "cache hit: %b", CPU.dcache.hit);
+    $fdisplay(outfile, "cache cpu req: %b", CPU.dcache.cpu_req);
+    $fdisplay(outfile, "cache cpu stall: %b\n", CPU.dcache.cpu_stall_o);
+    
+
     // print Registers
     // DO NOT CHANGE THE OUTPUT FORMAT
     $fdisplay(outfile, "Registers");
